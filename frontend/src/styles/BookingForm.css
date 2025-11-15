@@ -1,0 +1,256 @@
+/* frontend/src/styles/BookingForm.css */
+
+.booking-card {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  border: 1px solid #e0e0e0;
+}
+
+.booking-card h3 {
+  color: #2c3e50;
+  font-size: 24px;
+  margin: 0 0 25px 0;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Formulario */
+.booking-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  color: #495057;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.label-icon {
+  font-size: 18px;
+}
+
+.form-input {
+  padding: 12px 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #2c3e50;
+  transition: all 0.3s ease;
+  background-color: #f8f9fa;
+  font-family: inherit;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #007bff;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.form-input:hover {
+  border-color: #bbb;
+}
+
+/* Inputs de tiempo lado a lado */
+.time-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+/* Información de duración */
+.duration-info {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 20px;
+  border-radius: 10px;
+  border-left: 4px solid #007bff;
+  margin: 10px 0;
+}
+
+.duration-row,
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.duration-label,
+.total-label {
+  color: #6c757d;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.duration-value {
+  color: #2c3e50;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.total-row {
+  border-top: 2px solid #dee2e6;
+  margin-top: 8px;
+  padding-top: 12px;
+}
+
+.total-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.total-value {
+  color: #28a745;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+/* Mensaje de error */
+.error-message {
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-left: 4px solid #dc3545;
+  color: #856404;
+  padding: 15px;
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.error-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+/* Botón de envío */
+.btn-submit {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+  border: none;
+  padding: 15px 25px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-submit:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+}
+
+.btn-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-submit:disabled {
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+}
+
+/* Spinner pequeño para el botón */
+.spinner-small {
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Nota informativa */
+.booking-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #e7f3ff;
+  border-radius: 8px;
+  border-left: 4px solid #17a2b8;
+}
+
+.note-icon {
+  font-size: 20px;
+  color: #17a2b8;
+  flex-shrink: 0;
+}
+
+.booking-note p {
+  margin: 0;
+  font-size: 13px;
+  color: #004085;
+  line-height: 1.5;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .booking-card {
+    padding: 20px;
+  }
+
+  .booking-card h3 {
+    font-size: 20px;
+  }
+
+  .time-inputs {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .total-value {
+    font-size: 20px;
+  }
+
+  .btn-submit {
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .booking-card {
+    padding: 15px;
+  }
+
+  .duration-info {
+    padding: 15px;
+  }
+
+  .form-input {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+}

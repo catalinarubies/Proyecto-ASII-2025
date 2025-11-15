@@ -1,10 +1,9 @@
-// frontend/src/components/BookingForm.jsx
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom'; 
-import api from '../services/api'; 
+import api from '../services/api';
+import '../styles/BookingForm.css';
 
-function BookingForm({ fieldId }) {
+function BookingForm({ fieldId, fieldName, pricePerHour }) {
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
@@ -26,22 +25,20 @@ function BookingForm({ fieldId }) {
     }
 
     // --- VALIDACIONES ---
-
-    // 1. Calcular minutos totales
     const [startHour, startMinute] = startTime.split(':').map(Number);
     const [endHour, endMinute] = endTime.split(':').map(Number);
     
     const startTotalMinutes = startHour * 60 + startMinute;
     const endTotalMinutes = endHour * 60 + endMinute;
 
-    // 2. Validar que hora fin > hora inicio
+    // Validar que hora fin > hora inicio
     if (endTotalMinutes <= startTotalMinutes) {
       setError('La hora de fin debe ser posterior a la hora de inicio.');
       setLoading(false);
       return;
     }
 
-    // 3. Validar duración mínima (1 hora)
+    // Validar duración mínima (1 hora)
     const durationMinutes = endTotalMinutes - startTotalMinutes;
     if (durationMinutes < 60) {
       setError('La reserva debe durar al menos 1 hora.');
@@ -49,7 +46,7 @@ function BookingForm({ fieldId }) {
       return;
     }
 
-    // 4. Validar fecha no pasada (comparación de strings)
+    // Validar fecha no pasada
     const today = new Date().toISOString().split('T')[0];
     if (date < today) {
       setError('No puedes reservar en una fecha pasada.');
@@ -57,7 +54,7 @@ function BookingForm({ fieldId }) {
       return;
     }
 
-    // 5. Validar horario hábil (opcional)
+    // Validar horario hábil (8:00 - 23:00)
     if (startHour < 8 || endHour > 23) {
       setError('El horario debe estar entre 8:00 y 23:00.');
       setLoading(false);
@@ -68,6 +65,7 @@ function BookingForm({ fieldId }) {
     const userId = parseInt(localStorage.getItem('userId'));
     if (!userId) {
       setError('Debes iniciar sesión para reservar.');
+      setTimeout(() => navigate('/login'), 2000);
       setLoading(false);
       return;
     }
@@ -81,18 +79,24 @@ function BookingForm({ fieldId }) {
       end_time: endTime,
     };
 
+    // Calcular total
+    const hours = durationMinutes / 60;
+    const total = Math.round(hours * pricePerHour);
+
     // --- LLAMADA A LA API ---
     try {
       await api.post('/bookings', bookingData);
       
-      // Navegar a confirmación
+      // Navegar a confirmación con datos
       navigate('/congrats', {
         state: {
           bookingData: {
+            fieldName,
             date,
             start_time: startTime,
             end_time: endTime,
-            duration: `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60}m`
+            duration: `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60 > 0 ? `${durationMinutes % 60}m` : ''}`,
+            total
           }
         }
       });
@@ -100,9 +104,8 @@ function BookingForm({ fieldId }) {
     } catch (err) {
       console.error('Error al crear reserva:', err);
       
-      // Manejo específico de errores
       if (err.response?.status === 401) {
-        setError('Tu sesión expiró. Por favor, inicia sesión nuevamente.');
+        setError('Tu sesión expiró. Redirigiendo al login...');
         setTimeout(() => navigate('/login'), 2000);
       } else if (err.response?.status === 409) {
         setError('Este horario ya está reservado. Elige otro.');
@@ -116,7 +119,7 @@ function BookingForm({ fieldId }) {
     }
   };
 
-  // Calcular duración para mostrar al usuario
+  // Calcular duración para mostrar
   const calculateDuration = () => {
     if (!startTime || !endTime) return null;
 
@@ -131,8 +134,9 @@ function BookingForm({ fieldId }) {
 
     const hours = Math.floor(diff / 60);
     const minutes = diff % 60;
+    const total = Math.round((diff / 60) * pricePerHour);
 
-    return `${hours}h${minutes > 0 ? ` ${minutes}m` : ''}`;
+    return { hours, minutes, total };
   };
 
   const duration = calculateDuration();
@@ -140,11 +144,14 @@ function BookingForm({ fieldId }) {
 
   return (
     <div className="booking-card">
-      <h3>Reserva tu Cancha</h3>
+      <h3>Reservar Cancha</h3>
       
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="booking-form">
         <div className="form-group">
-          <label htmlFor="date">📅 Fecha:</label>
+          <label htmlFor="date">
+            <span className="label-icon">📅</span>
+            Fecha
+          </label>
           <input 
             type="date" 
             id="date" 
@@ -152,43 +159,82 @@ function BookingForm({ fieldId }) {
             onChange={(e) => setDate(e.target.value)}
             min={today}
             required 
+            className="form-input"
           />
         </div>
         
-        <div className="form-group">
-          <label htmlFor="startTime">🕐 Hora de Inicio:</label>
-          <input 
-            type="time" 
-            id="startTime" 
-            value={startTime} 
-            onChange={(e) => setStartTime(e.target.value)}
-            required 
-          />
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="endTime">🕕 Hora de Fin:</label>
-          <input 
-            type="time" 
-            id="endTime" 
-            value={endTime} 
-            onChange={(e) => setEndTime(e.target.value)}
-            required 
-          />
+        <div className="time-inputs">
+          <div className="form-group">
+            <label htmlFor="startTime">
+              <span className="label-icon">🕐</span>
+              Hora Inicio
+            </label>
+            <input 
+              type="time" 
+              id="startTime" 
+              value={startTime} 
+              onChange={(e) => setStartTime(e.target.value)}
+              required 
+              className="form-input"
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="endTime">
+              <span className="label-icon">🕕</span>
+              Hora Fin
+            </label>
+            <input 
+              type="time" 
+              id="endTime" 
+              value={endTime} 
+              onChange={(e) => setEndTime(e.target.value)}
+              required 
+              className="form-input"
+            />
+          </div>
         </div>
 
         {duration && (
-          <p className="duration-info">
-            ⏱️ Duración: <strong>{duration}</strong>
-          </p>
+          <div className="duration-info">
+            <div className="duration-row">
+              <span className="duration-label">⏱️ Duración:</span>
+              <span className="duration-value">
+                {duration.hours}h {duration.minutes > 0 && `${duration.minutes}m`}
+              </span>
+            </div>
+            <div className="total-row">
+              <span className="total-label">Total a pagar:</span>
+              <span className="total-value">
+                ${duration.total.toLocaleString('es-AR')}
+              </span>
+            </div>
+          </div>
         )}
         
-        {error && <p className="error-message">❌ {error}</p>}
+        {error && (
+          <div className="error-message">
+            <span className="error-icon">⚠️</span>
+            {error}
+          </div>
+        )}
 
         <button type="submit" disabled={loading} className="btn-submit">
-          {loading ? 'Reservando...' : 'Confirmar Reserva'}
+          {loading ? (
+            <>
+              <span className="spinner-small"></span>
+              Reservando...
+            </>
+          ) : (
+            'Confirmar Reserva'
+          )}
         </button>
       </form>
+
+      <div className="booking-note">
+        <span className="note-icon">ℹ️</span>
+        <p>Se enviará confirmación por email</p>
+      </div>
     </div>
   );
 }

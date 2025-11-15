@@ -1,9 +1,8 @@
-// frontend/src/pages/FieldDetail.jsx
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api'; 
 import BookingForm from '../components/BookingForm';
+import '../styles/FieldDetail.css';
 
 function FieldDetail() {
   const { fieldId } = useParams(); 
@@ -41,9 +40,12 @@ function FieldDetail() {
   if (error) {
     return (
       <div className="error-container">
-        <h2>❌ Error</h2>
+        <div className="error-icon">⚠️</div>
+        <h2>Error al cargar</h2>
         <p>{error}</p>
-        <button onClick={() => navigate('/home')}>Volver a búsqueda</button>
+        <button onClick={() => navigate('/home')} className="btn-back">
+          Volver a búsqueda
+        </button>
       </div>
     );
   }
@@ -51,8 +53,12 @@ function FieldDetail() {
   if (!field) {
     return (
       <div className="error-container">
+        <div className="error-icon">🔍</div>
         <h2>Cancha no encontrada</h2>
-        <button onClick={() => navigate('/home')}>Volver a búsqueda</button>
+        <p>La cancha que buscas no existe o fue eliminada.</p>
+        <button onClick={() => navigate('/home')} className="btn-back">
+          Volver a búsqueda
+        </button>
       </div>
     );
   }
@@ -63,59 +69,67 @@ function FieldDetail() {
         ← Volver a búsqueda
       </button>
 
-      <div className="field-info">
-        <h1>{field.name}</h1>
-        <div className="field-meta">
-          <span className="sport-badge">{field.sport}</span>
-          <span className="location">📍 {field.location}</span>
-        </div>
-
-        <div className="price-box">
-          <span className="price-label">Precio por hora:</span>
-          <span className="price-amount">
-            ${field.price_per_hour?.toLocaleString('es-AR')}
-          </span>
-        </div>
-
-        {field.description && (
-          <div className="description">
-            <h3>Descripción</h3>
-            <p>{field.description}</p>
+      <div className="field-content">
+        <div className="field-info-section">
+          <div className="field-header">
+            <h1>{field.name}</h1>
+            <span className="sport-badge">{field.sport}</span>
           </div>
-        )}
-        
-        {field.amenities && field.amenities.length > 0 && (
-          <div className="amenities">
-            <h3>Servicios Adicionales</h3>
-            <ul>
-              {field.amenities.map((item, index) => (
-                <li key={index}>✅ {item}</li>
-              ))}
-            </ul>
+
+          <div className="field-location">
+            <span className="icon">📍</span>
+            <span>{field.location}</span>
           </div>
-        )}
-        
-        {field.images && field.images.length > 0 && (
-          <div className="images-gallery">
-            <h3>Galería</h3>
-            <div className="images-grid">
-              {field.images.map((img, index) => (
-                <img 
-                  key={index} 
-                  src={img} 
-                  alt={`${field.name} - ${index + 1}`}
-                  className="field-image"
-                  onError={(e) => e.target.style.display = 'none'}
-                />
-              ))}
+
+          <div className="price-card">
+            <div className="price-label">Precio por hora</div>
+            <div className="price-amount">
+              ${field.price_per_hour?.toLocaleString('es-AR')}
             </div>
           </div>
-        )}
-      </div>
 
-      <div className="booking-section">
-        <h2>Reservar esta cancha</h2>
-        <BookingForm fieldId={fieldId} />
+          {field.description && (
+            <div className="description-section">
+              <h3>Descripción</h3>
+              <p>{field.description}</p>
+            </div>
+          )}
+          
+          {field.amenities && field.amenities.length > 0 && (
+            <div className="amenities-section">
+              <h3>Servicios Adicionales</h3>
+              <ul className="amenities-list">
+                {field.amenities.map((item, index) => (
+                  <li key={index}>
+                    <span className="check-icon">✓</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          
+          {field.images && field.images.length > 0 && (
+            <div className="images-section">
+              <h3>Galería</h3>
+              <div className="images-grid">
+                {field.images.map((img, index) => (
+                  <img 
+                    key={index} 
+                    src={img} 
+                    alt={`${field.name} - ${index + 1}`}
+                    className="field-image"
+                    onError={(e) => e.target.style.display = 'none'}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="booking-sidebar">
+          <BookingForm fieldId={fieldId} fieldName={field.name} pricePerHour={field.price_per_hour} />
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-// frontend/src/services/api.js (MOCK TEMPORAL)
+
 
 /**
  * Mock API temporal para desarrollo en paralelo
@@ -66,15 +66,15 @@ const api = {
       
       return new Promise(resolve => setTimeout(() => resolve({
         data: { 
-          _id: fieldId, // ⬅️ MongoDB usa _id
-          id: fieldId,  // ⬅️ Por compatibilidad
+          _id: fieldId,
+          id: fieldId,
           name: "Cancha Fútbol 7 - Centro", 
           sport: "Fútbol", 
           location: "Centro, Córdoba", 
           price_per_hour: 5000, 
-          description: "Cancha con césped sintético de alta calidad. Ideal para partidos de 7 jugadores. Incluye iluminación nocturna y sistema de riego.",
-          amenities: ["Vestuarios", "Estacionamiento", "Parrilla", "Buffet"],
-          images: [], // Vacío por ahora
+          description: "Cancha con césped sintético de alta calidad. Ideal para partidos de 7 jugadores. Incluye iluminación nocturna y sistema de riego automático.",
+          amenities: ["Vestuarios", "Estacionamiento gratuito", "Parrilla", "Buffet", "Duchas calientes"],
+          images: [],
           owner_id: 1,
           created_at: new Date().toISOString(),
         }
@@ -102,8 +102,8 @@ const api = {
         });
       }
 
-      // Simular error 10% del tiempo (para testing)
-      if (Math.random() < 0.1) {
+      // Simular error 5% del tiempo (para testing)
+      if (Math.random() < 0.05) {
         return Promise.reject({
           response: {
             status: 409,
@@ -148,16 +148,13 @@ const api = {
   },
 
   /**
-   * Placeholder para PUT (por si Persona 2 lo necesita)
+   * Placeholder para otros métodos
    */
   put: (url, data) => {
     console.log(`[MOCK API] PUT ${url}`, data);
     return Promise.reject(new Error(`[MOCK API] PUT no implementado`));
   },
 
-  /**
-   * Placeholder para DELETE (por si Persona 2 lo necesita)
-   */
   delete: (url) => {
     console.log(`[MOCK API] DELETE ${url}`);
     return Promise.reject(new Error(`[MOCK API] DELETE no implementado`));
