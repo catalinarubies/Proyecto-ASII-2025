@@ -43,6 +43,47 @@ func NewConsumer(solrRepo repositories.SolrRepository, localCache *cache.LocalCa
 		log.Fatalf("Failed to open channel: %v", err)
 	}
 
+	// ⭐ Declarar exchange, cola y binding ⭐
+	// Exchange donde publica fields-api (tiene que coincidir el nombre)
+	err = channel.ExchangeDeclare(
+		"fields_events", // name (mismo que en fields-api)
+		"topic",         // type
+		true,            // durable
+		false,           // auto-deleted
+		false,           // internal
+		false,           // no-wait
+		nil,             // arguments
+	)
+	if err != nil {
+		log.Fatalf("Failed to declare exchange: %v", err)
+	}
+
+	// Declarar cola donde va a consumir search-api
+	_, err = channel.QueueDeclare(
+		"fields_queue", // name
+		true,           // durable
+		false,          // delete when unused
+		false,          // exclusive
+		false,          // no-wait
+		nil,            // arguments
+	)
+	if err != nil {
+		log.Fatalf("Failed to declare queue: %v", err)
+	}
+
+	// Enlazar cola al exchange con la routing key que usa fields-api
+	err = channel.QueueBind(
+		"fields_queue",  // queue name
+		"fields.*",      // routing key (mismo patrón que en fields-api)
+		"fields_events", // exchange
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatalf("Failed to bind queue: %v", err)
+	}
+	// ⭐ FIN agregado ⭐
+
 	log.Println("RabbitMQ consumer initialized")
 
 	return &Consumer{
