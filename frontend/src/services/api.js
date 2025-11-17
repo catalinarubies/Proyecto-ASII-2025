@@ -1,165 +1,201 @@
+import axios from 'axios';
 
+// URLs base de las APIs
+const USERS_API_URL = 'http://localhost:8080/api'; // users-api
+const SEARCH_API_URL = 'http://localhost:8081/api'; // search-api
+const FIELDS_API_URL = 'http://localhost:8082/api'; // fields-api
+const BOOKINGS_API_URL = 'http://localhost:8083/api'; // bookings-api
 
-/**
- * Mock API temporal para desarrollo en paralelo
- * Este archivo será REEMPLAZADO por Persona 2 con:
- * - Axios real
- * - Interceptores JWT
- * - Endpoints reales del backend
- */
-
+// Cliente HTTP principal
 const api = {
   /**
-   * Simula GET requests
+   * Configuración de headers con JWT
    */
-  get: (url) => {
-    console.log(`[MOCK API] GET ${url}`);
-    
-    // GET /fields (búsqueda - para Persona 2)
-    if (url.includes('/search') || url === '/fields') {
-      return new Promise(resolve => setTimeout(() => resolve({
-        data: {
-          fields: [
-            { 
-              _id: "mock-field-1",
-              id: "mock-field-1",
-              name: "Cancha Fútbol 5", 
-              sport: "Fútbol", 
-              location: "Centro, Córdoba",
-              price_per_hour: 4000,
-              description: "Cancha techada con césped sintético.",
-              amenities: ["Vestuarios", "Estacionamiento"],
-              images: []
-            },
-            { 
-              _id: "mock-field-2",
-              id: "mock-field-2",
-              name: "Cancha Fútbol 7", 
-              sport: "Fútbol", 
-              location: "Nueva Córdoba",
-              price_per_hour: 5000,
-              description: "Cancha al aire libre con iluminación nocturna.",
-              amenities: ["Vestuarios", "Parrilla", "Buffet"],
-              images: []
-            },
-            { 
-              _id: "mock-field-3",
-              id: "mock-field-3",
-              name: "Cancha Básquet", 
-              sport: "Básquet", 
-              location: "Alberdi",
-              price_per_hour: 3500,
-              description: "Cancha techada profesional.",
-              amenities: ["Vestuarios", "Estacionamiento"],
-              images: []
-            }
-          ],
-          total: 3,
-          page: 1
-        }
-      }), 500));
-    }
-    
-    // GET /fields/:id (detalle de cancha)
-    if (url.includes('/fields/')) {
-      const fieldId = url.split('/').pop();
-      
-      return new Promise(resolve => setTimeout(() => resolve({
-        data: { 
-          _id: fieldId,
-          id: fieldId,
-          name: "Cancha Fútbol 7 - Centro", 
-          sport: "Fútbol", 
-          location: "Centro, Córdoba", 
-          price_per_hour: 5000, 
-          description: "Cancha con césped sintético de alta calidad. Ideal para partidos de 7 jugadores. Incluye iluminación nocturna y sistema de riego automático.",
-          amenities: ["Vestuarios", "Estacionamiento gratuito", "Parrilla", "Buffet", "Duchas calientes"],
-          images: [],
-          owner_id: 1,
-          created_at: new Date().toISOString(),
-        }
-      }), 300));
-    }
-    
-    return Promise.reject(new Error(`[MOCK API] Endpoint GET ${url} no mockeado`));
+  getHeaders: () => {
+    const token = localStorage.getItem('token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
   },
 
   /**
-   * Simula POST requests
+   * GET requests
    */
-  post: (url, data) => {
-    console.log(`[MOCK API] POST ${url}`, data);
-    
-    // POST /bookings (crear reserva)
-    if (url === '/bookings') {
-      // Validación básica mock
-      if (!data.field_id || !data.user_id || !data.date) {
-        return Promise.reject({
-          response: {
-            status: 400,
-            data: { message: "Faltan campos requeridos" }
-          }
-        });
-      }
-
-      // Simular error 5% del tiempo (para testing)
-      if (Math.random() < 0.05) {
-        return Promise.reject({
-          response: {
-            status: 409,
-            data: { message: "Este horario ya está reservado (error simulado)" }
-          }
-        });
-      }
+  get: async (url, config = {}) => {
+    try {
+      // Determinar qué API usar según el endpoint
+      let baseURL = USERS_API_URL;
       
-      // Respuesta exitosa
-      return new Promise(resolve => setTimeout(() => resolve({ 
-        status: 201, 
-        data: { 
-          message: "Reserva creada con éxito",
-          booking: {
-            _id: `mock-booking-${Date.now()}`,
-            field_id: data.field_id,
-            user_id: data.user_id,
-            date: data.date,
-            start_time: data.start_time,
-            end_time: data.end_time,
-            created_at: new Date().toISOString()
-          }
-        }
-      }), 400));
-    }
+      if (url.includes('/search') || url.includes('/fields')) {
+        baseURL = SEARCH_API_URL;
+      } else if (url.includes('/bookings')) {
+        baseURL = BOOKINGS_API_URL;
+      }
 
-    // POST /login (para Persona 2)
-    if (url === '/login' || url.includes('login')) {
-      return new Promise(resolve => setTimeout(() => resolve({
-        data: {
-          token: "mock-jwt-token-12345",
-          user: {
-            id: 1,
-            name: "Usuario Mock",
-            email: data.email || "usuario@example.com"
-          }
+      const response = await axios.get(`${baseURL}${url}`, {
+        ...config,
+        headers: {
+          ...api.getHeaders(),
+          ...config.headers
         }
-      }), 300));
+      });
+      
+      return response;
+    } catch (error) {
+      console.error(`[API Error] GET ${url}:`, error.response?.data || error.message);
+      throw error;
     }
-    
-    return Promise.reject(new Error(`[MOCK API] Endpoint POST ${url} no mockeado`));
   },
 
   /**
-   * Placeholder para otros métodos
+   * POST requests
    */
-  put: (url, data) => {
-    console.log(`[MOCK API] PUT ${url}`, data);
-    return Promise.reject(new Error(`[MOCK API] PUT no implementado`));
+  post: async (url, data, config = {}) => {
+    try {
+      // Determinar qué API usar según el endpoint
+      let baseURL = USERS_API_URL;
+      
+      if (url.includes('/bookings')) {
+        baseURL = BOOKINGS_API_URL;
+      } else if (url.includes('/fields')) {
+        baseURL = FIELDS_API_URL;
+      }
+
+      const response = await axios.post(`${baseURL}${url}`, data, {
+        ...config,
+        headers: {
+          ...api.getHeaders(),
+          ...config.headers
+        }
+      });
+      
+      return response;
+    } catch (error) {
+      console.error(`[API Error] POST ${url}:`, error.response?.data || error.message);
+      throw error;
+    }
   },
 
-  delete: (url) => {
-    console.log(`[MOCK API] DELETE ${url}`);
-    return Promise.reject(new Error(`[MOCK API] DELETE no implementado`));
+  /**
+   * PUT requests
+   */
+  put: async (url, data, config = {}) => {
+    try {
+      let baseURL = USERS_API_URL;
+      
+      if (url.includes('/bookings')) {
+        baseURL = BOOKINGS_API_URL;
+      } else if (url.includes('/fields')) {
+        baseURL = FIELDS_API_URL;
+      }
+
+      const response = await axios.put(`${baseURL}${url}`, data, {
+        ...config,
+        headers: {
+          ...api.getHeaders(),
+          ...config.headers
+        }
+      });
+      
+      return response;
+    } catch (error) {
+      console.error(`[API Error] PUT ${url}:`, error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * DELETE requests
+   */
+  delete: async (url, config = {}) => {
+    try {
+      let baseURL = USERS_API_URL;
+      
+      if (url.includes('/bookings')) {
+        baseURL = BOOKINGS_API_URL;
+      } else if (url.includes('/fields')) {
+        baseURL = FIELDS_API_URL;
+      }
+
+      const response = await axios.delete(`${baseURL}${url}`, {
+        ...config,
+        headers: {
+          ...api.getHeaders(),
+          ...config.headers
+        }
+      });
+      
+      return response;
+    } catch (error) {
+      console.error(`[API Error] DELETE ${url}:`, error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  /**
+   * Métodos helper específicos
+   */
+  auth: {
+    login: (email, password) => 
+      api.post('/login', { email, password }),
+    
+    register: (userData) => 
+      api.post('/register', userData),
+    
+    logout: () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    },
+    
+    getCurrentUser: () => {
+      const user = localStorage.getItem('user');
+      return user ? JSON.parse(user) : null;
+    },
+    
+    saveToken: (token) => {
+      localStorage.setItem('token', token);
+    },
+    
+    saveUser: (user) => {
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+  },
+
+  fields: {
+    search: (params) => 
+      api.get('/search', { params }),
+    
+    getById: (id) => 
+      api.get(`/fields/${id}`),
+    
+    create: (fieldData) => 
+      api.post('/fields', fieldData)
+  },
+
+  bookings: {
+    create: (bookingData) => 
+      api.post('/bookings', bookingData),
+    
+    getByUser: (userId) => 
+      api.get(`/bookings/user/${userId}`),
+    
+    getById: (id) => 
+      api.get(`/bookings/${id}`),
+    
+    cancel: (id) => 
+      api.delete(`/bookings/${id}`)
   }
 };
 
-export default api;
+// Interceptor para manejo global de errores
+axios.interceptors.response.use(
+  response => response,
+  error => {
+    if (error.response?.status === 401) {
+      // Token inválido o expirado
+      api.auth.logout();
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
 
+export default api;
