@@ -6,14 +6,11 @@
 
 Descripción
 Arquitectura
+Microservicios
 Tecnologías
-Requisitos Previos
 Instalación y Ejecución
-Estructura del Proyecto
 APIs y Endpoints
-Ejemplos de Uso
-Testing
-Troubleshooting
+
 
 
 # Descripción
@@ -27,29 +24,7 @@ Sistema que permite a los usuarios:
 El sistema está compuesto por 3 microservicios backend independientes que se comunican entre sí mediante HTTP y RabbitMQ, y un frontend React.
 
 # Arquitectura
-┌─────────────┐
-│   Frontend  │ (React)
-│   :3000     │
-└──────┬──────┘
-       │
-       ├──────────────┬──────────────┬──────────────┐
-       │              │              │              │
-       ▼              ▼              ▼              ▼
-┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐
-│ users-api│   │fields-api│   │search-api│   │ RabbitMQ │
-│   :8080  │◄──┤   :8081  │──►│   :8082  │◄──┤  :5672   │
-└────┬─────┘   └────┬─────┘   └────┬─────┘   └──────────┘
-     │              │              │
-     ▼              ▼              ▼
-┌─────────┐   ┌──────────┐   ┌─────────┐
-│  MySQL  │   │ MongoDB  │   │  Solr   │
-│  :3307  │   │  :27017  │   │  :8983  │
-└─────────┘   └──────────┘   └────┬────┘
-                                   │
-                              ┌────▼────┐
-                              │Memcached│
-                              │ :11211  │
-                              └─────────┘
+
 
 # Microservicios
 users-api (Puerto 8080)
@@ -140,72 +115,3 @@ Solr Admin: http://localhost:8983
 
 # APIs y Endpoints
 
-users-api (http://localhost:8080)
-
-Método | Endpoint | Descripción | Body 
-POST | /users | Crear usuario | {name, email, password}
-GET | /users/:id | Obtener usuario | - 
-POST | /login | Login | {email, password}
-GET | /health | Health check | -
-
-Respuesta de Login:
-json{
-  "token": "eyJhbGciOiJIUzI1NiIs...",
-  "user": {
-    "id": 1,
-    "name": "Juan Perez",
-    "email": "juan@test.com"
-  }
-}
-
-fields-api (http://localhost:8081)
-
-Método | Endpoint | Descripción | Body 
-POST | /fields | Crear cancha | {name, sport, location, price_per_hour, owner_id}
-GET | /fields/:id | Obtener cancha | -
-PUT | /fields/:id | Actualizar cancha | {name?, sport?, ...}
-DELETE | /fields/:id | Eliminar cancha | -
-POST | /bookings | Crear reserva | {field_id, user_id, date, start_time, end_time}
-GET | /bookings/:id | Obtener reserva | -
-GET | /bookings/user/:userId | Reservas de usuario | -
-GET | /health | Health check | -
-
-Ejemplo de Cancha:
-json{
-  "id": "674d5e8f9c1234567890abcd",
-  "name": "Cancha Fútbol 5",
-  "sport": "Fútbol",
-  "location": "Centro, Córdoba",
-  "price_per_hour": 5000,
-  "image": "https://example.com/image.jpg",
-  "description": "Cancha con césped sintético",
-  "owner_id": 1,
-  "available": true
-}
-
-search-api (http://localhost:8082)
-
-Método | Endpoint | Descripción | Query Params
-GET | /search | Buscar canchas | query, sport, location, min_price, max_price, sort_by, sort_desc, page, size
-GET | /health | Health check | -
-
-Ejemplo de búsqueda:
-GET /search?query=futbol&location=cordoba&sort_by=price_per_hour&page=1&size=10
-
-Respuesta:
-json{
-  "fields": [
-    {
-      "id": "674d5e8f...",
-      "name": "Cancha Fútbol 5",
-      "sport": "Fútbol",
-      "location": "Centro, Córdoba",
-      "price_per_hour": 5000,
-      "available": true
-    }
-  ],
-  "total_count": 15,
-  "page": 1,
-  "size": 10,
-  "total_pages": 2
-}
