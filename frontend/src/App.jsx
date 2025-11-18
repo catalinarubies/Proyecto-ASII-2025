@@ -1,47 +1,42 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/login';
-import Home from './pages/home';
+import Login from './pages/Login';
+import Home from './pages/Home';
+import FieldDetail from './pages/FieldDetail';
+import Congrats from './pages/Congrats';
 
-// Componente para proteger rutas (solo usuarios autenticados)
-const PrivateRoute = ({ children }) => {
+// Componente para proteger rutas (requiere autenticación)
+function PrivateRoute({ children }) {
   const token = localStorage.getItem('token');
   
   if (!token) {
-    console.log('🚫 Acceso denegado: No hay token. Redirigiendo a login...');
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
   
   return children;
-};
+}
 
 function App() {
   return (
     <Router>
       <Routes>
-        {/* Ruta pública: Login */}
-        <Route path="/" element={<Login />} />
+        {/* Ruta pública */}
+        <Route path="/login" element={<Login />} />
         
-        {/* Ruta protegida: Home */}
-        <Route
-          path="/home"
+        {/* Rutas protegidas */}
+        <Route 
+          path="/home" 
           element={
             <PrivateRoute>
               <Home />
             </PrivateRoute>
-          }
+          } 
         />
         
-        {/* Rutas para Persona 3 (Juli) - Por ahora páginas temporales */}
         <Route 
-          path="/field/:id" 
+          path="/fields/:fieldId" 
           element={
             <PrivateRoute>
-              <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'Arial' }}>
-                <h1>🚧 Página en Construcción</h1>
-                <p>Esta pantalla será implementada por Persona 3 (Juli)</p>
-                <p><a href="/home" style={{ color: '#667eea' }}>← Volver a Home</a></p>
-              </div>
+              <FieldDetail />
             </PrivateRoute>
           } 
         />
@@ -50,17 +45,14 @@ function App() {
           path="/congrats" 
           element={
             <PrivateRoute>
-              <div style={{ padding: '40px', textAlign: 'center', fontFamily: 'Arial' }}>
-                <h1>🎉 ¡Reserva Exitosa!</h1>
-                <p>Esta pantalla será implementada por Persona 3 (Juli)</p>
-                <p><a href="/home" style={{ color: '#667eea' }}>← Volver a Home</a></p>
-              </div>
+              <Congrats />
             </PrivateRoute>
           } 
         />
         
-        {/* Ruta por defecto: Redirigir a login */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Redirección por defecto */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </Router>
   );

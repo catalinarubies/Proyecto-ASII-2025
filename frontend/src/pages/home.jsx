@@ -1,50 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { searchFields } from '../services/api';
-import '../styles/Home.css';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../services/api";
+import "../styles/Home.css";
 
 const Home = () => {
   const navigate = useNavigate();
-  
-  // Estados
-  const [query, setQuery] = useState('');
   const [fields, setFields] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [page, setPage] = useState(1);
+  const [error, setError] = useState(null);
+  
+  // Filtros de búsqueda
+  const [filters, setFilters] = useState({
+    sport: "",
+    location: "",
+    minPrice: "",
+    maxPrice: ""
+  });
+
+  // Paginación
+  const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const size = 9; // 9 canchas por página (3x3 grid)
 
-  // Datos del usuario logueado
-  const userName = localStorage.getItem('userName') || 'Usuario';
+  // Usuario actual
+  const user = api.auth.getCurrentUser();
 
-  // Cargar canchas al montar el componente y cuando cambia la página
   useEffect(() => {
-    loadFields();
-  }, [page]);
+    searchFields();
+  }, [currentPage]);
 
-  const loadFields = async (searchQuery = query) => {
-    setLoading(true);
-    setError('');
-
+  const searchFields = async () => {
     try {
-      const data = await searchFields(searchQuery, page, size);
+      setLoading(true);
+      setError(null);
+
+      // Construir parámetros de búsqueda
+      const params = {
+        page: currentPage,
+        limit: 10
+      };
+
+      if (filters.sport) params.sport = filters.sport;
+      if (filters.location) params.location = filters.location;
+      if (filters.minPrice) params.min_price = filters.minPrice;
+      if (filters.maxPrice) params.max_price = filters.maxPrice;
+
+      // Llamar a search-api
+      const response = await api.fields.search(params);
       
-      console.log('📦 Datos recibidos:', data);
-      
-      setFields(data.results || []);
-      setTotalPages(Math.ceil((data.total || 0) / size));
-      
-    } catch (err) {
-      console.error('❌ Error al cargar canchas:', err);
-      
-      if (err.response) {
-        setError(`Error ${err.response.status}: ${err.response.data?.message || 'Error en el servidor'}`);
-      } else if (err.request) {
-        setError('No se pudo conectar con search-api. Usando datos mock.');
-      } else {
-        setError('Error inesperado al cargar las canchas');
-      }
+      setFields(response.data.fields || []);
+      setTotalPages(Math.ceil((response.data.total || 0) / 10));
+    } catch (error) {
+      console.error("Error al buscar canchas:", error);
+      setError(error.response?.data?.message || "Error al cargar las canchas");
+      setFields([]);
     } finally {
       setLoading(false);
     }
@@ -52,149 +60,196 @@ const Home = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    setPage(1); // Resetear a la primera página
-    loadFields(query);
+    setCurrentPage(1);
+    searchFields();
   };
 
-  const handleFieldClick = (fieldId) => {
-    console.log('🎯 Navegando a detalle de cancha:', fieldId);
-    navigate(`/field/${fieldId}`);
+  const handleFilterChange = (e) => {
+    setFilters({
+      ...filters,
+      [e.target.name]: e.target.value
+    });
   };
 
   const handleLogout = () => {
-    console.log('👋 Cerrando sesión...');
-    localStorage.clear();
-    navigate('/');
+    api.auth.logout();
+    navigate("/login");
+  };
+
+  const goToFieldDetail = (fieldId) => {
+    navigate(`/fields/${fieldId}`);
   };
 
   return (
-    <div className="home-container">
-      {/* Header */}
+    <div className="home-page">
       <header className="home-header">
         <div className="header-content">
-          <h1>⚽ Reserva Tu Cancha</h1>
+          <h1>🏟️ Reserva de Canchas</h1>
           <div className="user-info">
-            <span>Hola, <strong>{userName}</strong></span>
+            <span>Hola, {user?.name || user?.email}</span>
             <button onClick={handleLogout} className="btn-logout">
-              Cerrar Sesión
+              Cerrar sesión
             </button>
           </div>
         </div>
       </header>
 
-      {/* Barra de Búsqueda */}
       <div className="search-section">
         <form onSubmit={handleSearch} className="search-form">
-          <input
-            type="text"
-            placeholder="Buscar canchas... (ej: fútbol, básquet, centro)"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="search-input"
-          />
-          <button type="submit" className="btn-search">
-            🔍 Buscar
+          <div className="form-group">
+            <label>Deporte</label>
+            <select 
+              name="sport" 
+              value={filters.sport} 
+              onChange={handleFilterChange}
+            >
+              <option value="">Todos</option>
+              <option value="Fútbol">Fútbol</option>
+              <option value="Básquet">Básquet</option>
+              <option value="Tenis">Tenis</option>
+              <option value="Vóley">Vóley</option>
+              <option value="Pádel">Pádel</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Ubicación</label>
+            <input
+              type="text"
+              name="location"
+              placeholder="ej: Centro, Nueva Córdoba"
+              value={filters.location}
+              onChange={handleFilterChange}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Precio mínimo</label>
+            <input
+              type="number"
+              name="minPrice"
+              placeholder="$0"
+              value={filters.minPrice}
+              onChange={handleFilterChange}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Precio máximo</label>
+            <input
+              type="number"
+              name="maxPrice"
+              placeholder="$10000"
+              value={filters.maxPrice}
+              onChange={handleFilterChange}
+            />
+          </div>
+
+          <button type="submit" className="btn-search" disabled={loading}>
+            {loading ? "Buscando..." : "🔍 Buscar"}
           </button>
         </form>
       </div>
 
-      {/* Contenido Principal */}
-      <div className="content-section">
-        {/* Estado: Cargando */}
+      <div className="results-section">
         {loading && (
-          <div className="loading">
+          <div className="loading-container">
             <div className="spinner"></div>
             <p>Cargando canchas...</p>
           </div>
         )}
 
-        {/* Estado: Error */}
-        {error && !loading && (
-          <div className="error-box">
+        {error && (
+          <div className="error-message">
+            <span className="error-icon">⚠️</span>
             <p>{error}</p>
-            <button onClick={() => loadFields()} className="btn-retry">
-              🔄 Reintentar
+            <button onClick={searchFields} className="btn-retry">
+              Reintentar
             </button>
           </div>
         )}
 
-        {/* Estado: Sin resultados */}
         {!loading && !error && fields.length === 0 && (
-          <div className="empty-state">
-            <div className="empty-icon">🏟️</div>
-            <h2>No se encontraron canchas</h2>
-            <p>Intenta con otra búsqueda.</p>
+          <div className="no-results">
+            <span className="no-results-icon">🔍</span>
+            <h3>No se encontraron canchas</h3>
+            <p>Intenta ajustar tus filtros de búsqueda</p>
           </div>
         )}
 
-        {/* Estado: Resultados encontrados */}
         {!loading && !error && fields.length > 0 && (
           <>
             <div className="results-header">
-              <h2>Canchas disponibles</h2>
-              <p>{fields.length} resultados en esta página</p>
+              <h2>Resultados ({fields.length} canchas)</h2>
             </div>
 
             <div className="fields-grid">
               {fields.map((field) => (
-                <div key={field.id} className="field-card">
-                  <div className="field-image-container">
-                    <img
-                      src={field.image || 'https://via.placeholder.com/300x200?text=Cancha'}
-                      alt={field.name}
-                      className="field-image"
-                      onError={(e) => {
-                        e.target.src = 'https://via.placeholder.com/300x200?text=Sin+Imagen';
-                      }}
-                    />
-                    {field.available === false && (
-                      <div className="unavailable-badge">No Disponible</div>
-                    )}
-                  </div>
-                  
-                  <div className="field-info">
+                <div key={field._id || field.id} className="field-card">
+                  <div className="field-card-header">
                     <h3>{field.name}</h3>
-                    <p className="field-sport">🏆 {field.sport}</p>
-                    <p className="field-location">📍 {field.location}</p>
+                    <span className="sport-badge">{field.sport}</span>
+                  </div>
+
+                  <div className="field-card-body">
+                    <div className="field-info">
+                      <span className="icon">📍</span>
+                      <span>{field.location}</span>
+                    </div>
+
+                    <div className="field-price">
+                      <span className="price-label">Precio por hora:</span>
+                      <span className="price-amount">
+                        ${field.price_per_hour?.toLocaleString('es-AR')}
+                      </span>
+                    </div>
+
                     {field.description && (
                       <p className="field-description">
-                        {field.description.substring(0, 80)}
-                        {field.description.length > 80 ? '...' : ''}
+                        {field.description.length > 100
+                          ? `${field.description.substring(0, 100)}...`
+                          : field.description}
                       </p>
                     )}
-                    <div className="field-footer">
-                      <p className="field-price">
-                        ${field.price_per_hour.toLocaleString()}/hora
-                      </p>
-                      <button
-                        onClick={() => handleFieldClick(field.id)}
-                        className="btn-details"
-                        disabled={field.available === false}
-                      >
-                        Ver Detalles →
-                      </button>
-                    </div>
+
+                    {field.amenities && field.amenities.length > 0 && (
+                      <div className="amenities-preview">
+                        <strong>Servicios:</strong>{" "}
+                        {field.amenities.slice(0, 3).join(", ")}
+                        {field.amenities.length > 3 && "..."}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="field-card-footer">
+                    <button
+                      onClick={() => goToFieldDetail(field._id || field.id)}
+                      className="btn-details"
+                    >
+                      Ver detalles y reservar →
+                    </button>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Paginación */}
             {totalPages > 1 && (
               <div className="pagination">
                 <button
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
                   className="btn-page"
                 >
                   ← Anterior
                 </button>
+
                 <span className="page-info">
-                  Página <strong>{page}</strong> de <strong>{totalPages}</strong>
+                  Página {currentPage} de {totalPages}
                 </span>
+
                 <button
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
                   className="btn-page"
                 >
                   Siguiente →

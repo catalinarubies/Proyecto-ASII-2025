@@ -1,81 +1,93 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { login } from '../services/api';
-import '../styles/Login.css';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import api from "../services/api";
+import "../styles/Login.css";
 
 const Login = () => {
   const navigate = useNavigate();
-  
-  // Estados del componente
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({
+    email: "",
+    password: ""
+  });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+    setError(""); // Limpiar error al escribir
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     
-    // Validación básica
-    if (!email || !password) {
-      setError('Por favor completa todos los campos');
+    // Validaciones básicas
+    if (!formData.email || !formData.password) {
+      setError("Por favor completa todos los campos");
       return;
     }
 
-    setLoading(true);
+    if (!formData.email.includes("@")) {
+      setError("Email inválido");
+      return;
+    }
 
     try {
-      // Llamada al backend
-      const data = await login(email, password);
-      
-      // Guardar datos en localStorage
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userId', data.user.id);
-      localStorage.setItem('userName', data.user.name);
-      localStorage.setItem('userEmail', data.user.email);
-      
-      console.log('✅ Login exitoso:', data.user);
-      
-      // Redirigir a Home
-      navigate('/home');
-      
-    } catch (err) {
+      setLoading(true);
+      setError("");
+
+      // Llamar a la API de login
+      const response = await api.auth.login(formData.email, formData.password);
+
+      // Guardar token y usuario
+      localStorage.setItem('token', response.data.token);
+      localStorage.setItem('userId', response.data.user.id);
+      localStorage.setItem('userName', response.data.user.name);
+      localStorage.setItem('userEmail', response.data.user.email);
+
+      // Redireccionar a Home
+      navigate("/home");
+    } catch (error) {
+      console.error("Error al iniciar sesión:", error);
+      setError(
+        error.response?.data?.message || 
+        "Usuario o contraseña incorrectos"
+      );
+    } finally {
       setLoading(false);
-      
-      // Manejo de errores
-      if (err.response) {
-        if (err.response.status === 401) {
-          setError('Email o contraseña incorrectos');
-        } else {
-          setError('Error en el servidor. Intenta nuevamente.');
-        }
-      } else if (err.request) {
-        setError('No se pudo conectar con el servidor. ¿Está corriendo users-api?');
-      } else {
-        setError('Error inesperado. Intenta nuevamente.');
-      }
-      
-      console.error('❌ Error en login:', err);
     }
   };
 
   return (
-    <div className="login-container">
-      <div className="login-box">
-        <h1>⚽ Reserva Tu Cancha</h1>
-        <p className="subtitle">Inicia sesión para comenzar</p>
-        
-        <form onSubmit={handleSubmit}>
+    <div className="login-page">
+      <div className="login-container">
+        <div className="login-header">
+          <div className="login-icon">🏟️</div>
+          <h1>Reserva de Canchas</h1>
+          <p>Inicia sesión para reservar tu cancha</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="login-form">
+          {error && (
+            <div className="error-alert">
+              <span className="error-icon">⚠️</span>
+              <span>{error}</span>
+            </div>
+          )}
+
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input
               type="email"
               id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              name="email"
               placeholder="tu@email.com"
+              value={formData.email}
+              onChange={handleChange}
               disabled={loading}
-              autoComplete="email"
+              required
             />
           </div>
 
@@ -84,31 +96,33 @@ const Login = () => {
             <input
               type="password"
               id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              name="password"
               placeholder="••••••••"
+              value={formData.password}
+              onChange={handleChange}
               disabled={loading}
-              autoComplete="current-password"
+              required
             />
           </div>
 
-          {error && (
-            <div className="error-message">
-              ⚠️ {error}
-            </div>
-          )}
-
           <button 
             type="submit" 
-            className="btn-login"
+            className="btn-login" 
             disabled={loading}
           >
-            {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+            {loading ? (
+              <>
+                <span className="spinner-small"></span>
+                Iniciando sesión...
+              </>
+            ) : (
+              "Iniciar sesión"
+            )}
           </button>
         </form>
 
-        <div className="test-credentials">
-          <small>💡 Para probar: test@test.com / 123456</small>
+        <div className="login-footer">
+          <p>¿No tienes cuenta? <a href="#register">Regístrate aquí</a></p>
         </div>
       </div>
     </div>

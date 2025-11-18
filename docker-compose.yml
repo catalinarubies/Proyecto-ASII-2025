@@ -91,8 +91,8 @@ services:
     environment:
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_USER: user
-      DB_PASSWORD: userpass
+      DB_USER: root
+      DB_PASSWORD: rootpass
       DB_NAME: users_db
       JWT_SECRET: mi-super-secret-key-cambiar-en-produccion
       PORT: 8080
