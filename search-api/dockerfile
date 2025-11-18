@@ -1,0 +1,38 @@
+# Etapa 1: Builder - Compilar la aplicación Go
+FROM golang:1.21-alpine AS builder
+
+# Instalar git (necesario para algunas dependencias)
+RUN apk add --no-cache git
+
+WORKDIR /app
+
+# Copiar archivos de dependencias
+COPY go.mod go.sum ./
+
+# Descargar dependencias
+RUN go mod download
+
+# Copiar todo el código fuente
+COPY . .
+
+# Compilar la aplicación
+# CGO_ENABLED=0: Compilar sin dependencias de C (binario estático)
+# GOOS=linux: Compilar para Linux
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o main .
+
+# Etapa 2: Runtime - Imagen final ligera
+FROM alpine:latest
+
+# Instalar certificados CA (necesarios para HTTPS)
+RUN apk --no-cache add ca-certificates
+
+WORKDIR /root/
+
+# Copiar el binario compilado desde la etapa builder
+COPY --from=builder /app/main .
+
+# Exponer el puerto 8082
+EXPOSE 8082
+
+# Comando para ejecutar la aplicación
+CMD ["./main"]
