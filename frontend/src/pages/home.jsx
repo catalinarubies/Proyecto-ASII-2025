@@ -8,7 +8,7 @@ const Home = () => {
   const [fields, setFields] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  
+
   // Filtros de búsqueda
   const [filters, setFilters] = useState({
     sport: "",
@@ -46,7 +46,7 @@ const Home = () => {
 
       // Llamar a search-api
       const response = await api.fields.search(params);
-      
+
       setFields(response.data.fields || []);
       setTotalPages(Math.ceil((response.data.total || 0) / 10));
     } catch (error) {
@@ -98,9 +98,9 @@ const Home = () => {
         <form onSubmit={handleSearch} className="search-form">
           <div className="form-group">
             <label>Deporte</label>
-            <select 
-              name="sport" 
-              value={filters.sport} 
+            <select
+              name="sport"
+              value={filters.sport}
               onChange={handleFilterChange}
             >
               <option value="">Todos</option>

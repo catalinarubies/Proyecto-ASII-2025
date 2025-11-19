@@ -22,7 +22,7 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validaciones básicas
     if (!formData.email || !formData.password) {
       setError("Por favor completa todos los campos");
@@ -52,7 +52,7 @@ const Login = () => {
     } catch (error) {
       console.error("Error al iniciar sesión:", error);
       setError(
-        error.response?.data?.message || 
+        error.response?.data?.message ||
         "Usuario o contraseña incorrectos"
       );
     } finally {
@@ -105,9 +105,9 @@ const Login = () => {
             />
           </div>
 
-          <button 
-            type="submit" 
-            className="btn-login" 
+          <button
+            type="submit"
+            className="btn-login"
             disabled={loading}
           >
             {loading ? (
