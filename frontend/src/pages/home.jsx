@@ -35,8 +35,9 @@ const Home = () => {
 
       // Construir parámetros de búsqueda
       const params = {
+        query: '',  // ← Agregar query vacío para búsqueda general
         page: currentPage,
-        limit: 10
+        size: 10    // ← Cambiar 'limit' por 'size'
       };
 
       if (filters.sport) params.sport = filters.sport;
@@ -48,10 +49,10 @@ const Home = () => {
       const response = await api.fields.search(params);
 
       setFields(response.data.fields || []);
-      setTotalPages(Math.ceil((response.data.total || 0) / 10));
+      setTotalPages(response.data.total_pages || 1);  // ← Usar total_pages
     } catch (error) {
       console.error("Error al buscar canchas:", error);
-      setError(error.response?.data?.message || "Error al cargar las canchas");
+      setError(error.response?.data?.error || "Error al cargar las canchas");
       setFields([]);
     } finally {
       setLoading(false);

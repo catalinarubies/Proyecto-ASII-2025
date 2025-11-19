@@ -21,7 +21,7 @@ const api = {
   get: async (url, config = {}) => {
     try {
       let baseURL = USERS_API_URL;
-      
+
       if (url.includes('/search') || url.includes('/fields')) {
         baseURL = url.includes('/search') ? SEARCH_API_URL : FIELDS_API_URL;
       }
@@ -33,7 +33,7 @@ const api = {
           ...config.headers
         }
       });
-      
+
       return response;
     } catch (error) {
       console.error(`[API Error] GET ${url}:`, error.response?.data || error.message);
@@ -47,7 +47,7 @@ const api = {
   post: async (url, data, config = {}) => {
     try {
       let baseURL = USERS_API_URL;
-      
+
       if (url.includes('/bookings') || url.includes('/fields')) {
         baseURL = FIELDS_API_URL;
       }
@@ -59,7 +59,7 @@ const api = {
           ...config.headers
         }
       });
-      
+
       return response;
     } catch (error) {
       console.error(`[API Error] POST ${url}:`, error.response?.data || error.message);
@@ -71,16 +71,16 @@ const api = {
    * Métodos helper específicos
    */
   auth: {
-    login: (email, password) => 
+    login: (email, password) =>
       api.post('/login', { email, password }),
-    
+
     logout: () => {
       localStorage.removeItem('token');
       localStorage.removeItem('userId');
       localStorage.removeItem('userName');
       localStorage.removeItem('userEmail');
     },
-    
+
     getCurrentUser: () => {
       return {
         id: localStorage.getItem('userId'),
@@ -91,15 +91,27 @@ const api = {
   },
 
   fields: {
-    search: (query = '', page = 1, size = 10) => 
-      api.get(`/search?query=${query}&page=${page}&size=${size}`),
-    
-    getById: (id) => 
+    search: (params = {}) => {
+      const { query = '', sport = '', location = '', minPrice, maxPrice, page = 1, size = 10 } = params;
+
+      const queryParams = new URLSearchParams();
+      if (query) queryParams.append('query', query);
+      if (sport) queryParams.append('sport', sport);
+      if (location) queryParams.append('location', location);
+      if (minPrice) queryParams.append('min_price', minPrice);
+      if (maxPrice) queryParams.append('max_price', maxPrice);
+      queryParams.append('page', page);
+      queryParams.append('size', size);
+
+      return api.get(`/search?${queryParams.toString()}`);
+    },
+
+    getById: (id) =>
       api.get(`/fields/${id}`)
-  },
+  }
 
   bookings: {
-    create: (fieldId, userId, date, startTime, endTime) => 
+    create: (fieldId, userId, date, startTime, endTime) =>
       api.post('/bookings', {
         field_id: fieldId,
         user_id: userId,
@@ -107,8 +119,8 @@ const api = {
         start_time: startTime,
         end_time: endTime
       }),
-    
-    getByUser: (userId) => 
+
+    getByUser: (userId) =>
       api.get(`/bookings/user/${userId}`)
   }
 };

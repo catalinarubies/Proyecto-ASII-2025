@@ -4,12 +4,16 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"sync"
 
 	"github.com/streadway/amqp"
 )
 
-var conn *amqp.Connection
-var channel *amqp.Channel
+var (
+	conn    *amqp.Connection
+	channel *amqp.Channel
+	mu      sync.Mutex // Para thread-safety
+)
 
 const (
 	ExchangeName = "fields_events"
@@ -17,9 +21,9 @@ const (
 )
 
 type EventMessage struct {
-	Operation  string `json:"operation"` // create, update, delete
+	Operation  string `json:"operation"`
 	EntityID   string `json:"entity_id"`
-	EntityType string `json:"entity_type"` // field, booking
+	EntityType string `json:"entity_type"`
 }
 
 func InitRabbitMQ() {
@@ -39,28 +43,28 @@ func InitRabbitMQ() {
 		log.Fatalf("Failed to open a channel: %v", err)
 	}
 
-	// Exchange
+	// Declarar exchange
 	err = channel.ExchangeDeclare(
-		ExchangeName, // name
-		"topic",      // type
-		true,         // durable
-		false,        // auto-deleted
-		false,        // internal
-		false,        // no-wait
-		nil,          // arguments
+		ExchangeName,
+		"topic",
+		true,
+		false,
+		false,
+		false,
+		nil,
 	)
 	if err != nil {
 		log.Fatalf("Failed to declare exchange: %v", err)
 	}
 
-	// Queue
+	// Declarar queue
 	_, err = channel.QueueDeclare(
-		QueueName, // name
-		true,      // durable
-		false,     // delete when unused
-		false,     // exclusive
-		false,     // no-wait
-		nil,       // arguments
+		QueueName,
+		true,
+		false,
+		false,
+		false,
+		nil,
 	)
 	if err != nil {
 		log.Fatalf("Failed to declare queue: %v", err)
@@ -68,9 +72,9 @@ func InitRabbitMQ() {
 
 	// Bind queue to exchange
 	err = channel.QueueBind(
-		QueueName,    // queue name
-		"fields.*",   // routing key
-		ExchangeName, // exchange
+		QueueName,
+		"fields.*",
+		ExchangeName,
 		false,
 		nil,
 	)
@@ -82,6 +86,15 @@ func InitRabbitMQ() {
 }
 
 func PublishEvent(operation, entityID, entityType string) error {
+	mu.Lock()
+	defer mu.Unlock()
+
+	// Verificar si la conexión está cerrada y reconectar
+	if conn == nil || conn.IsClosed() {
+		log.Println("RabbitMQ connection closed, reconnecting...")
+		InitRabbitMQ()
+	}
+
 	message := EventMessage{
 		Operation:  operation,
 		EntityID:   entityID,
@@ -94,10 +107,10 @@ func PublishEvent(operation, entityID, entityType string) error {
 	}
 
 	err = channel.Publish(
-		ExchangeName,         // exchange
-		"fields."+entityType, // routing key
-		false,                // mandatory
-		false,                // immediate
+		ExchangeName,
+		"fields."+entityType,
+		false,
+		false,
 		amqp.Publishing{
 			ContentType: "application/json",
 			Body:        body,
