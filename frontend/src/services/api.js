@@ -108,7 +108,7 @@ const api = {
 
     getById: (id) =>
       api.get(`/fields/${id}`)
-  }
+  },
 
   bookings: {
     create: (fieldId, userId, date, startTime, endTime) =>
