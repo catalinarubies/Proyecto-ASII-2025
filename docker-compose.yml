@@ -115,6 +115,7 @@ services:
       MONGO_DB: fields_db
       USERS_API_URL: http://users-api:8080
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      SOLR_URL: http://solr:8983/solr/fields_core
       PORT: 8081
     ports:
       - "8081:8081"
@@ -122,6 +123,8 @@ services:
       mongodb:
         condition: service_healthy
       rabbitmq:
+        condition: service_healthy
+      solr:
         condition: service_healthy
       users-api:
         condition: service_started
@@ -166,6 +169,9 @@ services:
       REACT_APP_SEARCH_API_URL: http://localhost:8082
     ports:
       - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
     depends_on:
       - users-api
       - fields-api
@@ -173,7 +179,7 @@ services:
     networks:
       - app-network
     restart: unless-stopped
-
+    
 networks:
   app-network:
     driver: bridge

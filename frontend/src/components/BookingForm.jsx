@@ -81,22 +81,26 @@ function BookingForm({ fieldId, fieldName, pricePerHour }) {
 
     // Calcular total
     const hours = durationMinutes / 60;
-    const total = Math.round(hours * pricePerHour);
+    const totalPrice = Math.round(hours * pricePerHour);
 
     // --- LLAMADA A LA API ---
     try {
-      await api.post('/bookings', bookingData);
+      const response = await api.post('/bookings', bookingData);
       
-      // Navegar a confirmación con datos
+      console.log('Respuesta del backend:', response.data);
+      
+      // Navegar a confirmación con datos completos
       navigate('/congrats', {
         state: {
           bookingData: {
-            fieldName,
-            date,
+            fieldName: fieldName,
+            date: date,
             start_time: startTime,
             end_time: endTime,
             duration: `${Math.floor(durationMinutes / 60)}h ${durationMinutes % 60 > 0 ? `${durationMinutes % 60}m` : ''}`,
-            total
+            totalPrice: totalPrice,
+            field_id: fieldId,
+            _id: response.data.booking_id || response.data._id || response.data.id || 'N/A'
           }
         }
       });

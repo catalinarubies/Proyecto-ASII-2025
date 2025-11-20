@@ -8,18 +8,13 @@ const Congrats = () => {
   const [booking, setBooking] = useState(null);
 
   useEffect(() => {
-    // Obtener datos de la reserva desde el state de navegación
-    if (location.state?.booking) {
-      setBooking(location.state.booking);
+    if (location.state?.bookingData) {
+      setBooking(location.state.bookingData);
     } else {
-      // Si no hay datos, redirigir a home
-      navigate("/home");
+      // Si no hay datos, redirigir al home después de 2 segundos
+      setTimeout(() => navigate("/home"), 2000);
     }
   }, [location, navigate]);
-
-  if (!booking) {
-    return null; // O un spinner
-  }
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -30,6 +25,16 @@ const Congrats = () => {
       day: 'numeric'
     });
   };
+
+  if (!booking) {
+    return (
+      <div className="congrats-page">
+        <div className="congrats-container">
+          <p>Redirigiendo...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="congrats-page">
@@ -65,6 +70,13 @@ const Congrats = () => {
             </span>
           </div>
 
+          {booking.duration && (
+            <div className="summary-item">
+              <span className="summary-label">⏱️ Duración:</span>
+              <span className="summary-value">{booking.duration}</span>
+            </div>
+          )}
+
           {booking.totalPrice && (
             <div className="summary-item total">
               <span className="summary-label">💰 Total:</span>
@@ -74,7 +86,7 @@ const Congrats = () => {
             </div>
           )}
 
-          {booking._id && (
+          {booking._id && booking._id !== 'N/A' && (
             <div className="booking-code">
               <span className="code-label">Código de reserva:</span>
               <span className="code-value">{booking._id}</span>
@@ -99,12 +111,14 @@ const Congrats = () => {
             🏠 Volver al inicio
           </button>
 
-          <button
-            onClick={() => navigate(`/fields/${booking.field_id}`)}
-            className="btn-secondary"
-          >
-            Ver detalles de la cancha
-          </button>
+          {booking.field_id && (
+            <button
+              onClick={() => navigate(`/fields/${booking.field_id}`)}
+              className="btn-secondary"
+            >
+              Ver detalles de la cancha
+            </button>
+          )}
         </div>
       </div>
     </div>

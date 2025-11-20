@@ -78,7 +78,18 @@ const Home = () => {
   };
 
   const goToFieldDetail = (fieldId) => {
-    navigate(`/fields/${fieldId}`);
+    const field = fields.find(f => (f._id || f.id) === fieldId);
+    if (field) {
+      alert(`
+      Cancha: ${field.name}
+      Deporte: ${field.sport}
+      Ubicación: ${field.location}
+      Precio: $${field.price_per_hour}
+      Descripción: ${field.description}
+    `);
+    }
+    // Comentar temporalmente la navegación
+     navigate(`/fields/${fieldId}`);
   };
 
   return (
@@ -88,10 +99,13 @@ const Home = () => {
           <h1>🏟️ Reserva de Canchas</h1>
           <div className="user-info">
             <span>Hola, {user?.name || user?.email}</span>
+              <button onClick={() => navigate('/my-bookings')} className="btn-reservas">
+                📅 Mis Reservas
+             </button>
             <button onClick={handleLogout} className="btn-logout">
-              Cerrar sesión
-            </button>
-          </div>
+        Cerrar sesión
+  </button>
+</div>
         </div>
       </header>
 
@@ -187,6 +201,15 @@ const Home = () => {
             <div className="fields-grid">
               {fields.map((field) => (
                 <div key={field._id || field.id} className="field-card">
+                  {field.image && (
+                    <div className="field-image-container">
+                      <img 
+                        src={field.image} 
+                        alt={field.name}
+                        className="field-image"
+                      />
+                    </div>
+                  )}
                   <div className="field-card-header">
                     <h3>{field.name}</h3>
                     <span className="sport-badge">{field.sport}</span>

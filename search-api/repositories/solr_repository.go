@@ -131,13 +131,14 @@ func (r *solrRepository) Delete(id string) error {
 
 // Search realiza una búsqueda en Solr con filtros, paginación y ordenamiento
 func (r *solrRepository) Search(query *domain.SearchQuery) (*domain.SearchResult, error) {
-	// Construir query de Solr (parte lógica, todavía sin encode)
+	// Construir query de Solr
 	q := "*:*"
 	if query.Query != "" {
-		// Buscar en nombre, deporte, ubicación y descripción (con wildcards)
+		// Escapar caracteres especiales en la búsqueda
+		escapedQuery := escapeSpecialChars(query.Query)
 		q = fmt.Sprintf(
 			"name:*%[1]s* OR sport:*%[1]s* OR location:*%[1]s* OR description:*%[1]s*",
-			query.Query,
+			escapedQuery,
 		)
 	}
 
@@ -145,11 +146,14 @@ func (r *solrRepository) Search(query *domain.SearchQuery) (*domain.SearchResult
 	var filters []string
 
 	if query.Sport != "" {
-		filters = append(filters, fmt.Sprintf("sport:\"%s\"", query.Sport))
+		// Búsqueda flexible por deporte (permite coincidencias parciales)
+		filters = append(filters, fmt.Sprintf("sport:*%s*", query.Sport))
 	}
 
 	if query.Location != "" {
-		filters = append(filters, fmt.Sprintf("location:*%s*", query.Location))
+		// Escapar las comas y espacios
+		escapedLocation := escapeSpecialChars(query.Location)
+		filters = append(filters, fmt.Sprintf("location:*%s*", escapedLocation))
 	}
 
 	if query.MinPrice != nil {
@@ -251,6 +255,19 @@ func (r *solrRepository) Search(query *domain.SearchQuery) (*domain.SearchResult
 	}
 
 	return result, nil
+}
+
+// Función auxiliar para escapar caracteres especiales de Solr
+func escapeSpecialChars(s string) string {
+	// Caracteres especiales en Solr: + - && || ! ( ) { } [ ] ^ " ~ * ? : \ /
+	specialChars := []string{"+", "-", "&&", "||", "!", "(", ")", "{", "}", "[", "]", "^", "\"", "~", "*", "?", ":", "\\", "/"}
+
+	result := s
+	for _, char := range specialChars {
+		result = strings.ReplaceAll(result, char, "\\"+char)
+	}
+
+	return result
 }
 
 // Funciones auxiliares para extraer valores de los documentos de Solr
